@@ -1,1 +1,6 @@
-[:home :articles :about :projects :services :readings]
+[{:text :home :url "/"}
+ {:text :articles :url "/articles"}
+ {:text :projects :url "/projects"}
+ {:text :services :url "/services"}
+ {:text :readings :url "/readings"}
+ {:text :about :url "/about"}]

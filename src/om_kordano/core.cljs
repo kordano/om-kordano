@@ -1,66 +1,36 @@
 (ns ^:figwheel-always om-kordano.core
-    (:require [cljs.reader :as reader]
-              [goog.events :as events]
-              [om.core :as om :include-macros true]
-              [om.dom :as dom :include-macros true])
-    (:import [goog.net XhrIo]
-             goog.net.EventType
-             [goog.events EventType]))
+    (:require [om.core :as om :include-macros true]
+              [om-tools.dom :as dom :include-macros true]
+              [om-tools.core :refer-macros [defcomponent]]))
 
+
+;; --- HELPERS ---
 (enable-console-print!)
 
 (println "Greetings Lord Kordano!")
 
-;; define your app data so that it doesn't get over-written on reload
+;; --- APP ---
+(def app-state
+  (atom {:views [{:text :home :url "/"}
+                 {:text :articles :url "/articles"} {:text :projects :url "/projects"}
+                 {:text :services :url "/services"} {:text :readings :url "/readings"}
+                 {:text :about :url "/about"}]}))
 
-(def app-state (atom {:text "Hello world!"
-                          :sites [{:text "Home" :url "/"}
-                                  {:text "Archives" :url "/archives"}
-                                  {:text "Projects" :url "/projects"}
-                                  {:text "About" :url "/about"}]}))
-(def ^:private meths
-  {:get "GET"
-   :put "PUT"
-   :post "POST"
-   :delete "DELETE"})
+(defcomponent nav-item [{:keys [text url]} owner]
+  (render [this]
+          (dom/a {:href url} (str text))))
 
-(defn edn-xhr [{:keys [method url data on-complete]}]
-  (let [xhr (XhrIo.)]
-    (events/listen xhr goog.net.EventType.COMPLETE
-      (fn [e]
-        (on-complete (reader/read-string (.getResponseText xhr)))))
-    (. xhr
-      (send url (meths method) (when data (pr-str data))
-        #js {"Content-Type" "application/edn"}))))
-
-(defn nav-item [{:keys [text url]} owner]
-  (reify
-    om/IRender
-    (render [this]
-      (dom/a #js {:href url} text))))
-
-
-(defn navbar [data owner]
-  (reify
-    om/IWillMount
-    (will-mount [_]
-      (edn-xhr
-       {:method :get
-        :url "data/views"
-        :on-complete #(om/transact! data :views (fn [_] %))}))
-    om/IRender
-    (render [this]
-      (apply dom/nav nil (om/build-all nav-item (:views data))))))
-
+(defcomponent nav-view [data owner]
+  (render
+   [this]
+   (dom/nav nil (om/build-all nav-item (:views data)))))
 
 (om/root
-  navbar
-  app-state
-  {:target (. js/document (getElementById "app"))})
+ nav-view
+ app-state {:target (. js/document (getElementById "app"))})
 
 (defn on-js-reload []
   ;; optionally touch your app-state to force rerendering depending on
   ;; your application
   ;; (swap! app-state update-in [:__figwheel_counter] inc)
 )
-
