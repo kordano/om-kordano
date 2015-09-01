@@ -1,7 +1,10 @@
 (ns ^:figwheel-always om-kordano.core
-    (:require [om.core :as om :include-macros true]
-              [om-tools.dom :as dom :include-macros true]
-              [om-tools.core :refer-macros [defcomponent]]))
+    (:require [om.core :as om]
+              [om.dom :as dom]
+              [secretary.core :as sec :include-macros true]
+              [goog.events :as events]
+              [goog.history.EventType :as EventType])
+    (:import goog.History))
 
 
 ;; --- HELPERS ---
@@ -9,28 +12,63 @@
 
 (println "Greetings Lord Kordano!")
 
-;; --- APP ---
+(sec/set-config! :prefix "#")
+
+(let [history (History.)
+      navigation EventType/NAVIGATE]
+  (goog.events/listen history
+                     navigation
+                     #(-> % .-token sec/dispatch!))
+  (doto history (.setEnabled true)))
+
 (def app-state
-  (atom {:views [{:text :home :url "/"}
-                 {:text :articles :url "/articles"} {:text :projects :url "/projects"}
-                 {:text :services :url "/services"} {:text :readings :url "/readings"}
-                 {:text :about :url "/about"}]}))
+  (atom {:views [{:text "home" :url "#/"}
+                 {:text "articles" :url "#/articles"}
+                 {:text "projects" :url "#/projects"}
+                 {:text "services" :url "#/services"}
+                 {:text "readings" :url "#/readings"}
+                 {:text "about" :url "#/about"}]
+         :welcome "Welcome!"}))
 
-(defcomponent nav-item [{:keys [text url]} owner]
-  (render [this]
-          (dom/a {:href url} (str text))))
+;; --- NAV ---
+(defn nav-view 
+  "Navigation bar"
+  [data owner]
+  (reify
+    om/IRender
+    (render
+      [this]
+      (apply dom/nav nil
+             (map
+              (fn [{:keys [text url]}]
+                (dom/a #js {:href url :className "nav-item"} (str text)))
+              (:views data))))))
 
-(defcomponent nav-view [data owner]
-  (render
-   [this]
-   (dom/nav nil (om/build-all nav-item (:views data)))))
+(om/root nav-view app-state {:target (. js/document (getElementById "nav-container"))})
 
-(om/root
- nav-view
- app-state {:target (. js/document (getElementById "app"))})
 
-(defn on-js-reload []
-  ;; optionally touch your app-state to force rerendering depending on
-  ;; your application
-  ;; (swap! app-state update-in [:__figwheel_counter] inc)
-)
+;; --- ARTICLES ---
+(defn articles-view
+  "View that shows a short list of all published articles"
+  [data owner]
+  (reify om/IRender (render [_] (dom/div nil (dom/h2 nil "Articles")))))
+
+(sec/defroute articles-page "/articles" []
+  (om/root articles-view app-state {:target (. js/document (getElementById "main-container"))}))
+
+
+;; --- LANDING PAGE ---
+(defn index-view
+  "Landing page"
+  [data owner]
+  (reify om/IRender (render [this] (dom/div nil (dom/h1 nil (:welcome data))))))
+
+(sec/defroute index-page "/" []
+  (om/root
+   index-view
+   app-state
+   {:target (. js/document (getElementById "main-container"))}))
+
+(-> js/document .-location (set! "#/"))
+
+(defn on-js-reload [])

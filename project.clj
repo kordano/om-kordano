@@ -9,11 +9,11 @@
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [sablono "0.3.6"]
                  [markdown-clj "0.9.69"]
-                 [org.omcljs/om "0.9.0"]
-                 [prismatic/om-tools "0.3.12"]]
+                 [secretary "1.2.1"]
+                 [org.omcljs/om "0.9.0"]]
 
-  :plugins [[lein-cljsbuild "1.0.5"]
-            [lein-figwheel "0.3.5"]]
+  :plugins [[lein-cljsbuild "1.1.0"]
+            [lein-figwheel "0.3.8"]]
 
   :source-paths ["src"]
 
@@ -29,10 +29,11 @@
                          :asset-path "js/compiled/out"
                          :output-to "resources/public/js/compiled/om_kordano.js"
                          :output-dir "resources/public/js/compiled/out"
+                         :source-map true
                          :source-map-timestamp true }}
              {:id "min"
               :source-paths ["src"]
-              :compiler {:output-to "resources/public/js/compiled/om_kordano.js"
+              :compiler {:output-to "resources/public/js/compiled/om_kordano_min.js"
                          :main om-kordano.core
                          :optimizations :advanced
                          :pretty-print false}}]}
