@@ -10,7 +10,6 @@
              goog.net.EventType
              [goog.events EventType]))
 
-
 ;; --- HELPERS ---
 (enable-console-print!)
 
